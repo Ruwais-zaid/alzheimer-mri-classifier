@@ -1,4 +1,4 @@
-# Project Architecture
+# Early Alzheimer-MRI-CLASSFIER (Production-Ready)
 
 This document outlines the full architecture of the project, from **CI/CD with GitHub Actions** to **Kubernetes deployment with Ingress**.
 
