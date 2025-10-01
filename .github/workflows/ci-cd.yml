@@ -1,0 +1,41 @@
+name: Alzheimer MRI Classifier Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  DOCKERHUB_USERNAME: zaid-talha123
+  IMAGE_NAME: alzheimer-mri-classifier
+  IMAGE_TAG: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure k3d kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Pull existing Docker image
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Deploy to k3d
+        run: |
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/
+
+          # Update deployment to use the pulled image
+          kubectl set image deployment/alzheimer-mri-classifier \
+            alzheimer-mri-classifier=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+          # Wait for rollout to complete
+          kubectl rollout status deployment/alzheimer-mri-classifier

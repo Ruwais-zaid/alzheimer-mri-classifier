@@ -1,0 +1,45 @@
+---
+- name: Configure Alzheimer MRI Classifier on WSL
+  hosts: localhost
+  connection: local
+  become: true
+  vars:
+    app_user: alzheimer
+    app_dir: /opt/alzheimer-mri-classifier
+    model_storage: /opt/models
+
+  tasks:
+    - name: Update system packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install required packages
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - docker.io
+          - docker-compose
+          - curl
+          - wget
+          - git
+          - htop
+          - vim
+        state: present
+
+    - name: Create directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - "{{ model_storage }}"
+
+    - name: Download model from GitHub
+      get_url:
+        url: "https://raw.githubusercontent.com/Ruwais-zaid/alzheimer-mri-classifier/master/Early%20alzheimer%27s%20detection/resnetmodel.pt"
+        dest: /opt/models/model.pt
+        mode: '0644'

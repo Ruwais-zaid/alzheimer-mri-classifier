@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alzheimer-mri-classifier
+  labels:
+    app: alzheimer-mri-classifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alzheimer-mri-classifier
+  template:
+    metadata:
+      labels:
+        app: alzheimer-mri-classifier
+    spec:
+      containers:
+        - name: alzheimer-mri-classifier
+          image: zaidtalha123/myapp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501
+              name: streamlit
+            - containerPort: 8000
+              name: metrics
+          env:
+            - name: MODEL_PATH
+              value: "/app/models/model.pt"
+          volumeMounts:
+            - name: model-storage
+              mountPath: /app/models       # mount entire models folder
+            - name: app-py
+              mountPath: /app/app.py       # mount only the file
+              subPath: app.py
+      volumes:
+        - name: model-storage
+          hostPath:
+            path: /opt/models
+            type: Directory
+        - name: app-py
+          configMap:
+            name: app1-py-config
+
+
