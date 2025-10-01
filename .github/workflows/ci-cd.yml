@@ -6,11 +6,11 @@ on:
 
 env:
   DOCKERHUB_USERNAME: zaidtalha123
-  IMAGE_NAME: alzheimer-mri-classifier
+  IMAGE_NAME: myapp
   IMAGE_TAG: latest
 
 jobs:
-  build-and-deploy:
+  pull-image:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,13 +18,10 @@ jobs:
       - name: Docker login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Build Docker image
-        run: docker build -t ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+      - name: Pull Docker image
+        run: docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
-      - name: Push Docker image
-        run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-
-      # Uncomment when you have a reachable cluster
+      # Kubernetes deployment (commented out for local testing)
       # - name: Set up kubectl
       #   uses: azure/setup-kubectl@v3
       #
@@ -36,6 +33,6 @@ jobs:
       # - name: Deploy to Kubernetes
       #   run: |
       #     kubectl apply -f k8s/ --validate=false
-      #     kubectl set image deployment/alzheimer-mri-classifier \
-      #       alzheimer-mri-classifier=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-      #     kubectl rollout status deployment/alzheimer-mri-classifier --timeout=60s || true
+      #     kubectl set image deployment/myapp \
+      #       myapp=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+      #     kubectl rollout status deployment/myapp --timeout=120s
