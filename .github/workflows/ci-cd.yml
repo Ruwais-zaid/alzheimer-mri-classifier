@@ -2,7 +2,7 @@ name: Alzheimer MRI Classifier Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 env:
   DOCKERHUB_USERNAME: zaidtalha123
