@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 env:
-  DOCKERHUB_USERNAME: zaid-talha123
+  DOCKERHUB_USERNAME: zaidtalha123
   IMAGE_NAME: alzheimer-mri-classifier
   IMAGE_TAG: latest
 
