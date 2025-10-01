@@ -53,7 +53,7 @@ This document outlines the full architecture of the project, from **CI/CD with G
 - Scrapes metrics from applications and Kubernetes cluster.
 - Provides insights on performance and health.
 
-![Prometheus](https://res.cloudinary.com/ddfmbzizr/image/upload/v1759331900/Screenshot_2025-09-30_225920_bmz4bs.png)
+![Prometheus](https://res.cloudinary.com/ddfmbzizr/image/upload/v1759331936/Screenshot_2025-10-01_195344_xfau9s.png)
 
 
 ### 6. Grafana (Dashboard)
