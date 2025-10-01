@@ -1,4 +1,4 @@
-name: Alzheimer MRI Classifier Deploy
+name: Alzheimer MRI Classifier Deploy (Debug)
 
 on:
   push:
@@ -13,7 +13,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Checkout with full history + debug
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history for debugging
+          submodules: false       # skip submodules unless you need them
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug Git info
+        run: |
+          echo ">>> Git status"
+          git status || true
+          echo ">>> Branches"
+          git branch -a || true
+          echo ">>> Last commit"
+          git log -1 || true
+          echo ">>> Remote info"
+          git remote -v || true
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
@@ -23,19 +40,19 @@ jobs:
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
 
-      - name: Pull existing Docker image
+      - name: Docker login & pull image
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} || echo "Image not found, skipping pull"
 
       - name: Deploy to k3d
         run: |
-          # Apply Kubernetes manifests
-          kubectl apply -f k8s/
+          echo ">>> Applying Kubernetes manifests"
+          kubectl apply -f k8s/ || exit 1
 
-          # Update deployment to use the pulled image
+          echo ">>> Updating Deployment image"
           kubectl set image deployment/alzheimer-mri-classifier \
             alzheimer-mri-classifier=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
-          # Wait for rollout to complete
+          echo ">>> Waiting for rollout"
           kubectl rollout status deployment/alzheimer-mri-classifier
