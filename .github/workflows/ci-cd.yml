@@ -10,29 +10,45 @@ env:
   IMAGE_TAG: latest
 
 jobs:
-  pull-image:
+  deploy:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ Checkout the repo
       - uses: actions/checkout@v4
 
+      # 2️⃣ Docker login
       - name: Docker login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+      # 3️⃣ Pull Docker image
       - name: Pull Docker image
         run: docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
-      # Kubernetes deployment (commented out for local testing)
-      # - name: Set up kubectl
-      #   uses: azure/setup-kubectl@v3
-      #
-      # - name: Configure kubeconfig
-      #   run: |
-      #     mkdir -p $HOME/.kube
-      #     echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
-      #
-      # - name: Deploy to Kubernetes
-      #   run: |
-      #     kubectl apply -f k8s/ --validate=false
-      #     kubectl set image deployment/myapp \
-      #       myapp=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-      #     kubectl rollout status deployment/myapp --timeout=120s
+      # 4️⃣ Setup kubectl
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      # 5️⃣ Configure kubeconfig
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          kubectl config view
+
+      # 6️⃣ Verify cluster connection
+      - name: Verify cluster
+        run: kubectl get nodes
+
+      # 7️⃣ Apply manifests
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/ --validate=false
+          kubectl set image deployment/alzheimer-mri-classifier \
+            alzheimer-mri-classifier=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          kubectl rollout status deployment/alzheimer-mri-classifier --timeout=120s
+
+      # 8️⃣ Verify ingress controller
+      - name: Verify Ingress
+        run: |
+          kubectl get svc -n ingress-nginx
+          kubectl get ingress
